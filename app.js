@@ -64,7 +64,7 @@ ioServer.on("connection", (socket) => {
   };
 
   let timerData = {};
-  let time = 2000;
+  let time = 20;
 
   // Ajout du nouveau runner à la liste
   allTheRunners[runnerForThisConnection.id] = runnerForThisConnection;
