@@ -141,12 +141,15 @@ window.document.addEventListener("DOMContentLoaded", function () {
     function onConnexion(socket){
       socket.on("destroyRunner", (runnersDataFromserver) => {
         let runnerReady = window.document.getElementById(runnersDataFromserver.id);
+        let runnerPseudo = window.document.getElementById(
+          runnersDataFromserver.pseudoId
+        );
         if (runnerReady) {
+          runnerPseudo.parentNode.removeChild(runnerPseudo)
           runnerReady.parentNode.removeChild(runnerReady);
         }
       });
       socket.on("runnersCreation", (runnersDataFromserver) => {
-        console.log(runnersDataFromserver)
         idSquarre = runnersDataFromserver.id
         let runnerPseudo = window.document.getElementById(
           runnersDataFromserver.pseudoId
@@ -167,7 +170,7 @@ window.document.addEventListener("DOMContentLoaded", function () {
         runnerReady.style.position = runnersDataFromserver.position;
         runnerReady.style.backgroundColor = runnersDataFromserver.backgroundColor;
         runnerPseudo.id = runnersDataFromserver.pseudoId;
-        runnerPseudo.textContent = runnersDataFromserver.pseudo;
+        runnerPseudo.textContent = runnersDataFromserver.pseudo + ' ' + runnersDataFromserver.left + ' parcourue...';
         runnerPseudo.style.top = parseInt(runnersDataFromserver.top) + -3 + "%";
         runnerPseudo.style.left = runnersDataFromserver.left;
         runnerPseudo.style.position = runnersDataFromserver.position;
@@ -200,8 +203,10 @@ window.document.addEventListener("DOMContentLoaded", function () {
          const allRunners = document.querySelectorAll("div");
          allRunners.forEach((runner) => {
            if (runner.id === winnerId) {
+            console.log('donne gagnant', data)
              runner.textContent = "winner";
            } else {
+            console.log('donne perdant', data)
              runner.textContent = "loser";
              timerDiv.textContent = data.winnerPseudo + ' a gagné la course !'
             }

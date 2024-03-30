@@ -28,6 +28,5 @@ async function checkIfPseudoExist(req,res,next){
     }finally{
         MongoClient.close();
     }
-    
 }
 export default checkIfPseudoExist;

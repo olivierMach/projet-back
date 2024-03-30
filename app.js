@@ -100,6 +100,7 @@ ioServer.on("connection", (socket) => {
       ioServer.emit("destroyRunner", runnerForThisConnection);
       playersNumber--
     }
+    number = 10
   });
   socket.on("smashSpace", (runnerData) => {
     for (const id in allTheRunners) {
