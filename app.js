@@ -64,7 +64,7 @@ ioServer.on("connection", (socket) => {
   };
 
   let timerData = {};
-  let time = 10000;
+  let time = 2000;
 
   // Ajout du nouveau runner à la liste
   allTheRunners[runnerForThisConnection.id] = runnerForThisConnection;
@@ -78,10 +78,9 @@ ioServer.on("connection", (socket) => {
   socket.on('runnerCreation', () => {
     // Envoyer le nouveau runner à tous les clients
     for (const id in allTheRunners) {
-      console.log(allTheRunners[id].id)
       if(allTheRunners[id].id !== runnerForThisConnection.id) {
-       let çacommenceacasserlescoujilles = parseFloat( allTheRunners[id].top) + number;
-       allTheRunners[id].top = çacommenceacasserlescoujilles + '%'
+       let addTopOnRunnersTop = parseFloat( allTheRunners[id].top) + number;
+       allTheRunners[id].top = addTopOnRunnersTop + '%'
        number = number * 2
       }
       ioServer.emit("runnersCreation", allTheRunners[id]);
@@ -99,13 +98,15 @@ ioServer.on("connection", (socket) => {
     if (allTheRunners[runnerForThisConnection.id]) {
       delete allTheRunners[runnerForThisConnection.id];
       ioServer.emit("destroyRunner", runnerForThisConnection);
+      playersNumber--
     }
   });
   socket.on("smashSpace", (runnerData) => {
-    runnerForThisConnection.left = parseInt(runnerData.runnerLeft) + 3 + "px";
     for (const id in allTheRunners) {
-      playersNumber--
-      ioServer.emit("runnersCreation", allTheRunners[id]);
+      if(allTheRunners[id].id === runnerForThisConnection.id) {
+        allTheRunners[id].left = parseFloat(runnerForThisConnection.left) + 3 + 'px'
+        ioServer.emit("runnersCreation", allTheRunners[id]);
+      }
     }
   });
   socket.on("timer", () => {
