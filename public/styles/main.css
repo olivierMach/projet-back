@@ -9,11 +9,13 @@ body {
     height: 100vh;
 }
 
-form {
-    background-color: #ffffff;
+.form {
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    width: 250px;
+    align-self: center;
 }
 
 label {
@@ -23,6 +25,7 @@ label {
 
 input[type="text"],
 input[type="color"],
+input[type="password"],
 button {
     padding: 10px;
     margin-bottom: 10px;
@@ -33,7 +36,8 @@ button {
 }
 
 input[type="color"] {
-    width: 50px; /* Réglez la largeur du sélecteur de couleur selon vos préférences */
+    width: 100%;
+    cursor: pointer;
 }
 
 button {
@@ -47,25 +51,39 @@ button:hover {
     background-color: #0056b3;
 }
 
-/* Facultatif : Animation de chargement pour le bouton */
-button:disabled::after {
-    content: "";
-    border: 3px solid #ffffff;
-    border-top: 3px solid #007bff;
-    border-radius: 50%;
-    width: 15px;
-    height: 15px;
-    display: inline-block;
-    animation: spin 1s linear infinite;
-    margin-left: 10px;
+button[type=submit] {
+    width: 150px;
+    display: block;
+    align-self: center;
 }
 
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
+p{
+    text-align: center;
 }
-/* Ajout de styles pour les paragraphes */
+
+#spanConnexion {
+    cursor: pointer;
+    transition: 0.5s;
+    color: #007bff;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+#logIn {
+    display: none;
+}
+
+span:hover {
+    color: #0056b3;
+}
+
+#modal {
+    display: flex;
+    flex-direction: column;
+    width: 600px;
+    padding: 30px;
+    background-color: rgb(171, 154, 154);
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    align-items: center;
+}

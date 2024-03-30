@@ -2,14 +2,15 @@ import path from "node:path";
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
 import { Server } from "socket.io";
-import MongoClient from "./src/db/client.js";
 import "dotenv/config";
-import cors from "cors"
+import cors from "cors";
+import checkIfPseudoExist from "./src/middlewares/ifExist.js";
+import pseudoAndPasswordOk from "./src/middlewares/pseudoAndPasswordOk.js";
 
-const port = 3030;
+const port = 32895;
 const app = express();
 
-app.use(cors('*'));
+app.use(cors("*"));
 app.use(express.json());
 app.use("/public", express.static("./public"));
 
@@ -19,48 +20,39 @@ app.get("/", (req, res) => {
   );
 });
 
-app.post("/subscribe", async (req, res) => {
- try {
-      await MongoClient.connect();
-      const db = MongoClient.db(String(process.env.DBNAME));
-      const collection = db.collection('runners');
-      const findPlayerOrNot = await collection
-      .find({pseudo: req.body.pseudo}, { projection: { _id: 0, score: 0 } })
-      .toArray();
-      console.log(findPlayerOrNot)
-      if(findPlayerOrNot.length > 0) {
-        res.send(JSON.stringify({response : 'Ce pseudo existe déjà', isExist: true}))
-      } else {
-        await collection.insertOne({
-          pseudo: req.body.pseudo,
-          score: req.body.score
-        });
-        res.send(JSON.stringify({isExist: false}))
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      MongoClient.close();
-    }
+app.post("/subscribe", checkIfPseudoExist, async (req, res) => {
+  if (req.body.pseudoExist) {
+    res.send(JSON.stringify({ isExist: true }));
+  } else {
+    res.send(JSON.stringify({ isExist: false }));
+  }
+});
+
+app.post("/sign-in", pseudoAndPasswordOk, async (req, res) => {
+  if (req.body.pseudoExist) {
+    res.send(JSON.stringify({ isExist: true}));
+  } else {
+    res.send(JSON.stringify({ isExist: false,  playerData: req.body.playerDataReq }));
+  }
 });
 
 const httpServer = app.listen(port, () => {
-  console.log("Server started on 3030");
+  console.log("Server started on 32895");
 });
 
 const ioServer = new Server(httpServer);
 
 // Création d'un objet pour stocker tous les runners
 const allTheRunners = {};
-const allTheRunnersWrapped = [];
 
+let playersNumber = 0;
 // Espacement initial pour les runners
-let topOffset = 35;
-
+let topOfSet = 35 
+let number = 10
 ioServer.on("connection", (socket) => {
   const runnerForThisConnection = {
     id: uuidv4(),
-    top: `${topOffset}%`, // Utilisation de l'espacement actuel
+    top: `${topOfSet}%`, // Utilisation de l'espacement actuel
     left: "0px",
     width: "50px",
     height: "50px",
@@ -72,26 +64,38 @@ ioServer.on("connection", (socket) => {
   };
 
   let timerData = {};
-  let time = 5000;
+  let time = 10000;
 
   // Ajout du nouveau runner à la liste
   allTheRunners[runnerForThisConnection.id] = runnerForThisConnection;
 
-  // Envoyer le nouveau runner à tous les clients
-  for (const id in allTheRunners) {
-    ioServer.emit("runnersCreation", allTheRunners[id]);
-    topOffset += 5;
+  if(playersNumber <= 1) {
+    playersNumber++
+    console.log('nombre de joueur', playersNumber)
+    ioServer.emit("numberOfPlayerOn", playersNumber)
   }
+  
+  socket.on('runnerCreation', () => {
+    // Envoyer le nouveau runner à tous les clients
+    for (const id in allTheRunners) {
+      console.log(allTheRunners[id].id)
+      if(allTheRunners[id].id !== runnerForThisConnection.id) {
+       let çacommenceacasserlescoujilles = parseFloat( allTheRunners[id].top) + number;
+       allTheRunners[id].top = çacommenceacasserlescoujilles + '%'
+       number = number * 2
+      }
+      ioServer.emit("runnersCreation", allTheRunners[id]);
+    }
+  })
 
-  socket.on("runnerColor", async (runnerData) => {
+  socket.on("runnerColor", (runnerData) => {
     console.log(runnerData);
     runnerForThisConnection.backgroundColor = runnerData.color;
     runnerForThisConnection.pseudo = runnerData.pseudo;
   });
-  // Augmenter l'espacement pour le prochain runner
-  // topOffset += 120; // 100px (hauteur du runner) + 20px (espacement)
+
   socket.on("disconnect", () => {
-    console.log("déconnecté");
+    console.log(`${runnerForThisConnection.pseudo} c'est déconnecté`);
     if (allTheRunners[runnerForThisConnection.id]) {
       delete allTheRunners[runnerForThisConnection.id];
       ioServer.emit("destroyRunner", runnerForThisConnection);
@@ -100,6 +104,7 @@ ioServer.on("connection", (socket) => {
   socket.on("smashSpace", (runnerData) => {
     runnerForThisConnection.left = parseInt(runnerData.runnerLeft) + 3 + "px";
     for (const id in allTheRunners) {
+      playersNumber--
       ioServer.emit("runnersCreation", allTheRunners[id]);
     }
   });
@@ -112,11 +117,12 @@ ioServer.on("connection", (socket) => {
       };
       socket.emit("chrono", timerData);
     } else {
-      const sortedRunners = Object.values(allTheRunners).sort((a, b) => parseInt(a.left) - parseInt(b.left));
+      const sortedRunners = Object.values(allTheRunners).sort(
+        (a, b) => parseInt(a.left) - parseInt(b.left)
+      );
       const winnerId = sortedRunners[sortedRunners.length - 1].id;
       const winnerPseudo = sortedRunners[sortedRunners.length - 1].pseudo;
-    ioServer.emit('timeEnd', { winnerId, winnerPseudo, timerData }); // Émettre à tous les clients
-
+      ioServer.emit("timeEnd", { winnerId, winnerPseudo, timerData }); // Émettre à tous les clients
     }
   });
 });
